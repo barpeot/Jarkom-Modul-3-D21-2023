@@ -1074,10 +1074,7 @@ curl -X GET "http://10.32.2.1/api/me" -H "Authorization: Bearer <Token>" -H "Con
 ```
 Dengan <Token> kita ganti juga. Maka hasil out.data adalah seperti berikut
 
-```
 ![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/a2c2f17e-8010-4279-b146-6864c22f12f1)
-
-```
 
 ## Soal 18
 
