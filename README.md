@@ -1016,6 +1016,7 @@ Cek juga database yang telah dibuat di Denken.
 ## Soal 15
 
 Untuk melakukan benchmarking pada nomor 15-16, maka kita siapkan dulu file json sebagai berikut yang akan disimpan sebagai data.json
+
 ![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/5e2c18f1-c959-4b76-8705-3e160bc4bf00)
 
 Kemudian, kita lakukan benchmark dengan command sebagai berikut
@@ -1023,6 +1024,7 @@ Kemudian, kita lakukan benchmark dengan command sebagai berikut
 ab -n 100 -c 10 -p data.json -T application/json http://10.32.2.1/api/auth/register
 ```
 Berikut hasilnya
+
 ![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/d20acc4c-904b-4375-b6b6-07004c18b174)
 
 
@@ -1042,6 +1044,7 @@ Menggunakan file yang data.json yang sama, kita benchmark dengan command berikut
 ab -n 100 -c 10 -p data.json -T application/json http://10.32.2.1/api/auth/login
 ```
 Berikut adalah hasilnya
+
 ![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/b9f02273-3a96-41c1-b745-4b99ad8d7dbb)
 
 Untuk respon API, kita curl dengan user yang sudah kita register
@@ -1062,6 +1065,7 @@ Untuk melakukan benchmark, kita gunakan command
 ab -n 100 -c 10 -H "Authorization: Bearer <Token>" -H "Content-Type: application/json" http://10.32.2.1/api/me
 ```
 Kita ganti <Token> dengan token yang sudah kita dapatkan di file out.data sebelumnya. Berikut adalah hasil testingnya
+
 ![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/c91fce75-ac80-47f6-8fa8-d25486ab1c5a)
 
 Untuk melihat respon APInya, kita gunakan
@@ -1144,7 +1148,6 @@ Hasil rps = 26,28
 Hasil rps = 28,2
 
 ![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/46cc2a41-1b35-4872-88f3-f78badf50931)
-
 
 ### Analisis
 
