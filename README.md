@@ -110,16 +110,143 @@ echo "$dhcpd" > "/etc/dhcp/dhcpd.conf"
 service isc-dhcp-server restart
 ```
 
-Agar dapat menggunakan DHCP, untuk setiap device kecuali Himmel perlu mengubah setting network configuration menjadi sebagai berikut:
+Agar dapat menggunakan DHCP, untuk setiap host kecuali Himmel perlu mengubah setting network configuration menjadi sebagai berikut:
 
 ```
 auto eth0
 iface eth0 inet dhcp
 ```
 
-Untuk network configuration dapat diakses dengan klik kanan device > edit network configuration.
+Jika sebuah host ingin menggunakan konfigurasi statis, maka dapat dilakukan dengan command ```ip a``` pada host tersebut, kemudian menyimpan nilai hardware ethernet yang ditampilkan pada interface ethernet yang digunakan.
 
-Client yang melalui Switch3 mendapatkan range IP dari [prefix IP].3.16 - [prefix IP].3.32 dan [prefix IP].3.64 - [prefix IP].3.80
+![ether](/assets/0_ether.png)
+
+Di gambar yang digunakan adalah link/ether milik interface eth0 dari Heiter.
+
+Selanjutnya menyimpan nilai hardware ethernet tersebut di DHCP Server dengan menambahkan 
+```
+host <Nama Host> {
+    hardware ethernet < xx:xx:xx:xx:xx:xx >;
+    fixed-address <IP Host>;
+    default-lease-time 43200;
+    max-lease-time 43200;
+}
+```
+
+Kemudian pada network configuration perlu menambahkan baris di bawah ini:
+
+```
+auto eth0
+iface eth0 inet dhcp
+hwaddress ether < xx:xx:xx:xx:xx:xx >
+```
+
+Untuk network configuration dapat diakses dengan klik kanan host > edit network configuration.
+
+Perlu juga dilakukan setup pada DHCP Relay yaitu Aura menjadi sebagai berikut:
+
+```
+#!/bin/bash
+
+apt update
+apt install isc-dhcp-relay -y
+
+relayconf="
+SERVERS=\"10.32.1.2\"
+
+INTERFACES=\"eth1 eth2 eth3 eth4\"
+
+OPTIONS=\"\"
+"
+
+echo "$relayconf" > "/etc/default/isc-dhcp-relay"
+```
+
+Sesuaikan relayconf dengan ip dari DHCP server, sedangkan INTERFACES perlu disesuaikan dengan Interface yang digunakan oleh DHCP Relay untuk menghubungkan antar host.
+
+```
+sysctl="
+#
+# /etc/sysctl.conf - Configuration file for setting system variables
+# See /etc/sysctl.d/ for additional system variables.
+# See sysctl.conf (5) for information.
+#
+
+#kernel.domainname = example.com
+
+# Uncomment the following to stop low-level messages on console
+#kernel.printk = 3 4 1 3
+
+##############################################################3
+# Functions previously found in netbase
+#
+
+# Uncomment the next two lines to enable Spoof protection (reverse-path filter)
+# Turn on Source Address Verification in all interfaces to
+# prevent some spoofing attacks
+#net.ipv4.conf.default.rp_filter=1
+#net.ipv4.conf.all.rp_filter=1
+
+# Uncomment the next line to enable TCP/IP SYN cookies
+# See http://lwn.net/Articles/277146/
+# Note: This may impact IPv6 TCP sessions too
+#net.ipv4.tcp_syncookies=1
+
+# Uncomment the next line to enable packet forwarding for IPv4
+net.ipv4.ip_forward=1
+
+# Uncomment the next line to enable packet forwarding for IPv6
+#  Enabling this option disables Stateless Address Autoconfiguration
+#  based on Router Advertisements for this host
+#net.ipv6.conf.all.forwarding=1
+
+
+###################################################################
+# Additional settings - these settings can improve the network
+# security of the host and prevent against some network attacks
+# including spoofing attacks and man in the middle attacks through
+# redirection. Some network environments, however, require that these
+# settings are disabled so review and enable them as needed.
+#
+# Do not accept ICMP redirects (prevent MITM attacks)
+#net.ipv4.conf.all.accept_redirects = 0
+#net.ipv6.conf.all.accept_redirects = 0
+# _or_
+# Accept ICMP redirects only for gateways listed in our default
+# gateway list (enabled by default)
+# net.ipv4.conf.all.secure_redirects = 1
+#
+# Do not send ICMP redirects (we are not a router)
+#net.ipv4.conf.all.send_redirects = 0
+#
+# Do not accept IP source route packets (we are not a router)
+#net.ipv4.conf.all.accept_source_route = 0
+#net.ipv6.conf.all.accept_source_route = 0
+#
+# Log Martian Packets
+#net.ipv4.conf.all.log_martians = 1
+#
+
+###################################################################
+# Magic system request Key
+# 0=disable, 1=enable all, >1 bitmask of sysrq functions
+# See https://www.kernel.org/doc/html/latest/admin-guide/sysrq.html
+# for what other values do
+#kernel.sysrq=438
+"
+
+echo "$sysctl" > "/etc/sysctl.conf"
+
+service isc-dhcp-relay restart
+```
+
+Kemudian di sysctl.conf milik Aura perlu uncomment baris ```net.ipv4.ip_forward=1``` agar bisa melakukan ip forwarding untuk IPv4.
+
+Berikut contoh DHCP lease yang berhasil dijalankan untuk sebuah host static Heiter.
+
+![dhcplease](/assets/0_dhcplease.png)
+
+3. Client yang melalui Switch3 mendapatkan range IP dari [prefix IP].3.16 - [prefix IP].3.32 dan [prefix IP].3.64 - [prefix IP].3.80
 
 - Untuk menyelesaikan soal ini kita perlu menambahkan baris pada /etc/dhcp/dhcpd.conf milik Himmel menjadi sebagai berikut:
 
@@ -131,6 +258,18 @@ subnet 10.32.3.0 netmask 255.255.255.0 {
 }
 
 ```
+
+Selanjutnya perlu setting network configuration pada client menjadi sebagai berikut:
+
+```
+auto eth0
+iface eth0 inet dhcp
+```
+
+Cek DHCP lease dengan menggunakan client dari switch3, yaitu Revolte dan Richter.
+
+![dhcpleaseRevolte](/assets/3_dhcpleaseRevolte.png)
+![dhcpleaseRichter](/assets/3_dhcpleaseRichter.png)
 
 3. Client yang melalui Switch4 mendapatkan range IP dari [prefix IP].4.12 - [prefix IP].4.20 dan [prefix IP].4.160 - [prefix IP].4.168 (3)
 
@@ -144,6 +283,18 @@ subnet 10.32.4.0 netmask 255.255.255.0 {
 }
 
 ```
+
+Selanjutnya perlu setting network configuration pada client menjadi sebagai berikut:
+
+```
+auto eth0
+iface eth0 inet dhcp
+```
+
+Cek DHCP lease dengan menggunakan client dari switch4, yaitu Sein dan Stark.
+
+![dhcpleaseSein](/assets/3_dhcpleaseSein.png)
+![dhcpleaseStark](/assets/3_dhcpleaseStark.png)
 
 4. Client mendapatkan DNS dari Heiter dan dapat terhubung dengan internet melalui DNS tersebut.
 
@@ -163,6 +314,16 @@ options {
         listen-on-v6 { any; };
 };
 ```
+
+Jangan lupa untuk client perlu setup /etc/resolv.conf menuju Heiter.
+
+```
+echo 'nameserver < ip Heiter>' > /etc/resolv.conf
+```
+
+Untuk mengecek dapat dilakukan dengan ```ping google.com```
+
+![ping](/assets/4_ping.png)
 
 5. Lama waktu DHCP server meminjamkan alamat IP kepada Client yang melalui Switch3 selama 3 menit sedangkan pada client yang melalui Switch4 selama 12 menit. Dengan waktu maksimal dialokasikan untuk peminjaman alamat IP selama 96 menit.
 
@@ -187,6 +348,13 @@ subnet 10.32.4.0 netmask 255.255.255.0 {
     max-lease-time 5760;
 }
 ```
+
+Hasil pada switch3:
+![dhcpleaseRevolte](/assets/3_dhcpleaseRevolte.png)
+
+Hasil pada switch4:
+![dhcpleaseSein](/assets/3_dhcpleaseSein.png)
+
 ## Soal 6
 
 6. Pada masing-masing worker PHP, lakukan konfigurasi virtual host untuk website berikut dengan menggunakan php 7.3.
@@ -332,6 +500,7 @@ upstream myweb  {
 Hasil:
 
 ![wrr](/assets/8_wrr1.png)
+
 ![wrr2](/assets/8_wrr2.png)
 
 ### Weighted Round Robin = 125,76 Request/Second
@@ -365,6 +534,7 @@ upstream myweb  {
 Hasil:
 
 ![lc](/assets/8_lc1.png)
+
 ![lc2](/assets/8_lc2.png)
 
 ### Least Connection = 145,2 Request/Second
@@ -398,6 +568,7 @@ server {
 Hasil:
 
 ![iph](/assets/8_iph1.png)
+
 ![iph2](/assets/8_iph2.png)
 
 ### IP Hash = 202,51 Request/Second
@@ -431,6 +602,7 @@ upstream myweb  {
 Hasil:
 
 ![gh](/assets/8_gh1.png)
+
 ![gh2](/assets/8_gh2.png)
 
 ### Generic Hash = 171,06 Request/Second
@@ -467,6 +639,8 @@ htpasswd -bc /etc/nginx/rahasiakita netics ajkd21
 
 Selanjutnya cek dengan ```lynx http://granz.channel.d21.com:81``` pada client
 
+![htpasswd](/assets/10_htpasswd.png)
+
 ## Soal 11
 
 Buat untuk setiap request yang mengandung /its akan di proxy passing menuju halaman https://www.its.ac.id
@@ -495,6 +669,10 @@ location /its {
 
 Untuk pengecekan dapat dilakukan dengan ```lynx http://granz.channel.d21.com:81/its``` di client.
 
+![its1](/assets/11_its1.png)
+
+![its2](/assets/11_its2.png)
+
 ## Soal 12
 
 Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [Prefix IP].3.70, [Prefix IP].4.167, dan [Prefix IP].4.168
@@ -522,6 +700,14 @@ location /its {
 ...
 }
 ```
+
+Untuk pengecekan dapat dilakukan dengan ```lynx http://granz.channel.d21.com:81/``` di client.
+
+Contoh jika ip address tidak diterima (10.32.4.17)
+![forbidden](/assets/12_forbidden.png)
+
+Contoh jika ip address tidak diterima (10.32.4.167)
+![allowed](/assets/12_allowed.png) 
 
 ## Soal 13
 
@@ -787,6 +973,14 @@ service php7.3-fpm start
 service nginx restart
 ```
 
+Untuk mengecek deployment dari server dapat dilakukan dengan ```lynx riegel.canyon.d21.com``` di client.
+
+![riegel](/assets/14_riegel.png) 
+
+Cek juga database yang telah dibuat di Denken.
+
+![jarkomd21](/assets/14_jarkomd21.png) 
+
 ## Soal 15
 
 ## Soal 16
@@ -815,6 +1009,9 @@ Untuk memastikan ketiganya bekerja sama secara adil untuk mengatur Riegel Channe
             proxy_pass http://10.32.4.3:8003/index.php;
      }
 ```
+Untuk mengecek deployment dari server dapat dilakukan dengan ```lynx riegel.canyon.d21.com/< nama worker >``` di client.
+
+![frieren](/assets/18_frieren.png) 
 
 ## Soal 19
 
