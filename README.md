@@ -613,6 +613,38 @@ Grafik:
 
 ## Soal 9
 
+Cukup dengan mencoba satu per satu sesuai kondisi yang diminta soal, kemudian lakukan benchmarking dengan
+```
+ab -n 100 -c 10 http://granz.channel.d21.com:81/
+```
+
+### 3 Worker, RPS = 171,21
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/3281d2f0-8a4d-430a-b963-24e088c5a630)
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/e8c210a8-6f1a-4e3c-8f37-b0c70abe8cd1)
+
+### 2 Worker, RPS = 167,8
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/de50a909-7820-4f7c-bed0-e2189a3e0629)
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/225943ab-5f38-41e0-a90f-f3f0276f79f1)
+
+
+### 1 Worker, RPS = 113,94
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/f6d1498e-a15d-446b-bc72-928165478285)
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/c0eb2c0f-97d2-4a8b-b448-7af1a278b8b8)
+
+
+### Grafik
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/87c0110e-005a-45bb-b187-a14fdb563ea8)
+
+
+Semakin sedikit worker yang bekerja, maka akan semakin sedikit pula request per second nya, menunjukkan bahwa request akan semakin terpusat dan menurunkan kapasitas request yang dapat diterima.
+
 ## Soal 10
 
 Tambahkan konfigurasi autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/rahasisakita/
