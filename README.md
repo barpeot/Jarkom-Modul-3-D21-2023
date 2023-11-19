@@ -1047,4 +1047,96 @@ Untuk mengecek deployment dari server dapat dilakukan dengan ```lynx riegel.cany
 
 ## Soal 19
 
+Untuk masing-masing worker, masuk ke direktori
+```
+/etc/php/7.3/fpm/pool.d
+```
+lalu edit file www.conf dan naikkan setiap setting di bawah sebanyak 3 kali percobaan
+- pm.max_children
+- pm.start_servers
+- pm.min_spare_servers
+- pm.max_spare_servers
+Tidak lupa untuk merestart nginx dan php servicenya juga. Selanjutnya, benchmark dilakukan dengan cara melakukan perintah
+```
+ab -n 100 -c 10 http://riegel.canyon.d21.com/
+```
+### Percobaan 1
+- pm.max_children = 25
+- pm.start_servers = 10
+- pm.min_spare_servers = 1
+- pm.max_spare_servers = 15
+Hasil rps = 18.96
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/921035aa-0acd-4254-a517-e88d29563d79)
+
+### Percobaan 2
+
+- pm.start_servers = 15
+- pm.min_spare_servers = 10
+- pm.max_spare_servers = 20
+Hasil rps = 26,28
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/d06c3baf-256c-4295-806a-c9df68ceeffc)
+
+
+### Percobaan 3
+
+- pm.max_children = 150
+- pm.start_servers = 50
+- pm.min_spare_servers = 30
+- pm.max_spare_servers = 70
+Hasil rps = 28,2
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/46cc2a41-1b35-4872-88f3-f78badf50931)
+
+
+### Analisis
+
+Peningkatan pm.max_children:
+Percobaan 1: 25
+Percobaan 2: 75 (Peningkatan 200% dari Percobaan 1)
+Percobaan 3: 150 (Peningkatan 100% dari Percobaan 2)
+Analisis: Terjadi peningkatan yang signifikan dalam jumlah maksimum proses anak, yang secara umum berdampak positif pada RPS.
+
+Peningkatan pm.start_servers:
+Percobaan 1: 10
+Percobaan 2: 15 (Peningkatan 50% dari Percobaan 1)
+Percobaan 3: 50 (Peningkatan 233.33% dari Percobaan 2)
+Analisis: Peningkatan nilai ini dapat meningkatkan waktu respons awal aplikasi.
+
+Peningkatan pm.min_spare_servers:
+Percobaan 1: 1
+Percobaan 2: 10 (Peningkatan 900% dari Percobaan 1)
+Percobaan 3: 30 (Peningkatan 200% dari Percobaan 2)
+Analisis: Peningkatan pm.min_spare_servers dapat membantu menjaga respons yang cepat, terutama saat ada lonjakan lalu lintas. Peningkatan yang signifikan dalam Percobaan 2 dan 3 dapat diartikan sebagai upaya untuk menjaga lebih banyak proses anak tetap aktif.
+
+Peningkatan pm.max_spare_servers:
+Percobaan 1: 15
+Percobaan 2: 20 (Peningkatan 33.33% dari Percobaan 1)
+Percobaan 3: 70 (Peningkatan 250% dari Percobaan 2)
+Analisis: Peningkatan yang signifikan di Percobaan 3 menunjukkan upaya untuk meningkatkan kapasitas menangani beban.
+
+Kesimpulan:
+Terjadi peningkatan RPS yang signifikan dari Percobaan 1 hingga Percobaan 3, menunjukkan bahwa penyesuaian konfigurasi PHP-FPM dapat meningkatkan kinerja server.
+
+
 ## Soal 20
+
+Tambahkan kode untuk membuat Load Balancer menerapkan Least Connection pada konfigurasi di Eisen
+```
+upstream laravel  {
+       least_conn;
+         server 10.32.4.1:8001;
+        server 10.32.4.2:8002;
+        server 10.32.4.3:8003;
+ }
+```
+Lakukan testing dengan perintah
+```
+ab -n 100 -c 10 http://riegel.canyon.d21.com/
+```
+
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/4d8a2b80-d674-44b3-a0e9-f78fbce10eff)
+
+
+Dari hasil testing, terjadi peningkatan terhadap requests per seconds. Menunjukkan bahwa algoritma least connection + php-fpm secara praktik lebih baik daripada algoritma round robin + php-fpm, meskipun perlu dilakukan testing dengan jumlah lebih dari sekali.
