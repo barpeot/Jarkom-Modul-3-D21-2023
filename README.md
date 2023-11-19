@@ -510,6 +510,7 @@ Setup Eisen adalah sebagai berikut:
 
 ```
 upstream myweb  {
+        least_conn;
         server 10.32.3.1:80;
         server 10.32.3.2:80;
         server 10.32.3.3:80;
@@ -517,7 +518,6 @@ upstream myweb  {
 
  server {
      listen 81;
-     least_conn;
 
      server_name granz.channel.d21.com;
 
@@ -544,6 +544,7 @@ Setup Eisen adalah sebagai berikut:
 
 ```
 upstream myweb  {
+        ip_hash;
         server 10.32.3.1:80;
         server 10.32.3.2:80;
         server 10.32.3.3:80;
@@ -551,7 +552,6 @@ upstream myweb  {
 
 server {
      listen 81;
-     ip_hash;
 
      server_name granz.channel.d21.com;
 
@@ -714,7 +714,6 @@ Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [
 ```
 server {
      listen 81;
-
      allow 10.32.3.69;
      allow 10.32.3.70;
      allow 10.32.4.167;
@@ -738,7 +737,7 @@ Untuk pengecekan dapat dilakukan dengan ```lynx http://granz.channel.d21.com:81/
 Contoh jika ip address tidak diterima (10.32.4.17)
 ![forbidden](/assets/12_forbidden.png)
 
-Contoh jika ip address tidak diterima (10.32.4.167)
+Contoh jika ip address diterima (10.32.4.167)
 ![allowed](/assets/12_allowed.png) 
 
 ## Soal 13
