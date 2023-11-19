@@ -187,6 +187,7 @@ subnet 10.32.4.0 netmask 255.255.255.0 {
     max-lease-time 5760;
 }
 ```
+## Soal 6
 
 6. Pada masing-masing worker PHP, lakukan konfigurasi virtual host untuk website berikut dengan menggunakan php 7.3.
 
@@ -437,3 +438,384 @@ Hasil:
 Grafik:
 
 ![grafik](/assets/8_grafik.png)
+
+## Soal 9
+
+## Soal 10
+
+Tambahkan konfigurasi autentikasi di LB dengan dengan kombinasi username: “netics” dan password: “ajkyyy”, dengan yyy merupakan kode kelompok. Terakhir simpan file “htpasswd” nya di /etc/nginx/rahasisakita/
+
+- Ubah setting website granz.channel.d21.com di Eisen menjadi demikian:
+
+```
+location / {
+    proxy_pass http://myweb;
+    proxy_set_header    X-Real-IP \$remote_addr;
+    proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header    Host \$http_host;
+
+    auth_basic \"Login untuk Mengakses Konten\";
+    auth_basic_user_file /etc/nginx/rahasiakita;
+}
+```
+
+Kemudian untuk menambah password dapat menggunakan command ```htpasswd``` milik apache2-utils
+
+```
+htpasswd -bc /etc/nginx/rahasiakita netics ajkd21
+```
+
+Selanjutnya cek dengan ```lynx http://granz.channel.d21.com:81``` pada client
+
+## Soal 11
+
+Buat untuk setiap request yang mengandung /its akan di proxy passing menuju halaman https://www.its.ac.id
+
+- Tambahkan location /its di granz.channel.d21.com pada Eisen kemudian proxy_pass ke https://www.its.ac.id
+
+```
+location / {
+    proxy_pass http://myweb;
+    proxy_set_header    X-Real-IP \$remote_addr;
+    proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header    Host \$http_host;
+
+    auth_basic \"Login untuk Mengakses Konten\";
+    auth_basic_user_file /etc/nginx/rahasiakita;
+}
+
+location /its {
+    proxy_pass https://www.its.ac.id/;
+    proxy_set_header    X-Real-IP \$remote_addr;
+    proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header    Host \$http_host;
+
+}
+```
+
+Untuk pengecekan dapat dilakukan dengan ```lynx http://granz.channel.d21.com:81/its``` di client.
+
+## Soal 12
+
+Selanjutnya LB ini hanya boleh diakses oleh client dengan IP [Prefix IP].3.69, [Prefix IP].3.70, [Prefix IP].4.167, dan [Prefix IP].4.168
+
+- Untuk menyelesaikan soal ini, perlu menambahkan ```allow [IP]``` pada LB Eisen untuk setiap IP yang ditentukan kemudian ```deny all``` untuk IP selain IP tersebut.
+
+```
+server {
+     listen 81;
+
+     allow 10.32.3.69;
+     allow 10.32.3.70;
+     allow 10.32.4.167;
+     allow 10.32.4.168;
+     deny all;
+     server_name granz.channel.d21.com;
+
+location / {
+    ...
+}
+
+location /its {
+    ...
+}
+...
+}
+```
+
+## Soal 13
+
+Semua data yang diperlukan, diatur pada Denken dan harus dapat diakses oleh Frieren, Flamme, dan Fern.
+
+- Denken merupakan database server yang mengatur worker Laravel berupa Frieren, Flamme, dan Fern. Berikut adalah script dari Denken.
+
+```
+#!/bin/bash
+
+apt update
+apt install mariadb-server -y
+```
+Pertama-tama perlu menginstal mariadb-server untuk sebagai databasenya.
+
+```
+mycnf=$"
+[client-server]
+
+!includedir /etc/mysql/conf.d/
+!includedir /etc/mysql/mariadb.conf.d/
+
+[mysqld]
+skip-networking=0
+skip-bind-address
+"
+
+echo "$mycnf" > "/etc/mysql/my.cnf"
+
+service mysql start
+
+```
+Selanjutnya menambahkan setting pada /etc/mysql/my.cnf untuk memperbolehkan worker dalam mengakses Denken.
+
+```
+mysql -u root -e\
+  "CREATE USER 'kelompokd21'@'%' IDENTIFIED BY '';"
+
+mysql -u root -e\
+  "CREATE USER 'kelompokd21'@'localhost' IDENTIFIED BY '';"
+
+mysql -u root -e\
+  "CREATE DATABASE jarkomd21;"
+
+mysql -u root -e\
+  "GRANT ALL PRIVILEGES ON *.* TO 'kelompokd21'@'%';"
+
+mysql -u root -e\
+  "GRANT ALL PRIVILEGES ON *.* TO 'kelompokd21'@'localhost';"
+
+mysql -u root -e\
+  "FLUSH PRIVILEGES;"
+```
+
+Kemudian buka mysql dan membuat user baru berupa ```kelompokd21``` dan juga database ```jarkomd21``` yang akan digunakan oleh worker.
+
+## Soal 14
+
+Frieren, Flamme, dan Fern memiliki Riegel Channel sesuai dengan quest guide berikut. Jangan lupa melakukan instalasi PHP8.0 dan Composer
+
+- Ketiga worker diatas merupakan worker Laravel, maka untuk setup website riegel.canyon.d21.com perlu dilakukan konfigurasi Laravel.
+
+```
+#!/bin/bash
+
+apt update
+apt install mariadb-client -y
+apt install lsb-release ca-certificates apt-transport-https software-properties-common gnupg2 -y
+
+curl -sSLo /usr/share/keyrings/deb.sury.org-php.gpg https://packages.sury.org/php/apt.gpg
+
+sh -c 'echo "deb [signed-by=/usr/share/keyrings/deb.sury.org-php.gpg] https://packages.sury.org/php/ $(lsb_release -sc) main" > /etc/apt/sources.list.d/php.list'
+
+apt update
+
+apt-get install php8.0-mbstring php8.0-xml php8.0-cli php8.0-common php8.0-intl php8.0-opcache php8.0-readline php8.0-mysql php8.0-fpm php8.0-curl unzip wget -y
+
+apt-get install nginx -y
+
+wget https://getcomposer.org/download/2.0.13/composer.phar
+chmod +x composer.phar
+mv composer.phar /usr/bin/composer
+
+rm composer.phar
+```
+Pertama-tama perlu dilakukan instalasi semua servis yng akan digunakan pada worker Laravel, seperti ```mariadb-client, php, nginx, dan composer```
+
+```
+apt-get install git -y
+
+git clone https://github.com/martuafernando/laravel-praktikum-jarkom.git
+
+mv "laravel-praktikum-jarkom" "/var/www/"
+
+server='
+server {
+
+    listen <PORT>;
+
+    root /var/www/laravel-praktikum-jarkom/public;
+
+    index index.php index.html index.htm;
+    server_name riegel.canyon.d21.com;
+
+    location / {
+            try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    # pass PHP scripts to FastCGI server
+    location ~ \.php$ {
+    include snippets/fastcgi-php.conf;
+    fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
+    }
+
+location ~ /\.ht {
+            deny all;
+    }
+
+}
+'
+
+echo "$server" > "/etc/nginx/sites-available/laravel-praktikum-jarkom"
+```
+
+Selanjutnya dilakukan clone github sesuai dengan projek yang diberikan pada soal dan dipindah ke root folder ```/var/www/laravel-praktikum-jarkom/``` adapun server nginx akan melakukan deploy dari ```/var/www/laravel-praktikum-jarkom/public```. \<PORT
+\> disini disesuaikan untuk setiap worker Laravel.
+
+```
+cd /var/www/laravel-praktikum-jarkom
+
+composer update
+composer install
+
+cp .env.example .env
+
+ln -s /etc/nginx/sites-available/laravel-praktikum-jarkom /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
+
+chown -R www-data.www-data /var/www/laravel-praktikum-jarkom/storage
+```
+
+Selanjutnya dilakukan ```composer update & composer install``` pada projek Laravel serta symbolic link dari ```/etc/nginx/sites-available/laravel-praktikum-jarkom``` menuju ```/etc/nginx/sites-enabled/``` agar dapat deploy server.
+
+Selain itu juga mengubah ```/var/www/laravel-praktikum-jarkom/storage``` menjadi milik ```www-data.www-data```
+
+```
+envi=$'
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost
+
+LOG_CHANNEL=stack
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
+
+DB_CONNECTION=mysql
+DB_HOST=10.32.2.2
+DB_PORT=3306
+DB_DATABASE=jarkomd21
+DB_USERNAME=kelompokd21
+DB_PASSWORD=
+
+BROADCAST_DRIVER=log
+CACHE_DRIVER=file
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=sync
+SESSION_DRIVER=file
+SESSION_LIFETIME=120
+
+MEMCACHED_HOST=127.0.0.1
+
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
+
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_HOST=
+PUSHER_PORT=443
+PUSHER_SCHEME=https
+PUSHER_APP_CLUSTER=mt1
+
+VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+VITE_PUSHER_HOST="${PUSHER_HOST}"
+VITE_PUSHER_PORT="${PUSHER_PORT}"
+VITE_PUSHER_SCHEME="${PUSHER_SCHEME}"
+VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
+'
+
+echo "$envi" > "/var/www/laravel-praktikum-jarkom/.env"
+```
+
+Selanjutnya perlu dilakukan konfigurasi .env file pada ```/var/www/laravel-praktikum-jarkom/``` dengan menyesuaikan section database agar sesuai dengan setting database di Denken:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=10.32.2.2
+DB_PORT=3306
+DB_DATABASE=jarkomd21
+DB_USERNAME=kelompokd21
+DB_PASSWORD=
+```
+
+Kemudian dilakukan migrasi dan seeding database dengan command ```php artisan migrate:fresh & php artisan db:seed --class=AiringsTableSeeder```.
+
+Selain itu juga perlu menjalankan command ```php artisan jwt:secret & php artisan key:generate``` agar projek Laravel dapat berjalan.
+
+```
+rm -r ~/laravel-praktikum-jarkom
+
+php artisan migrate:fresh
+php artisan db:seed --class=AiringsTableSeeder
+php artisan jwt:secret
+php artisan key:generate
+
+service php8.0-fpm start
+service nginx restart
+```
+Lalu perlu menjalankan php-fpm dan nginx untuk deploy server.
+
+Terakhir perlu juga dilakukan konfigurasi server riegel.canyon.d21.com pada Load Balancer Eisen.
+
+```
+server2=$' upstream laravel  {
+        server 10.32.4.1:8001;
+        server 10.32.4.2:8002;
+        server 10.32.4.3:8003;
+ }
+
+ server {
+     listen 80;
+     server_name riegel.canyon.d21.com;
+
+     location / {
+            proxy_pass http://laravel;
+     }
+ }'
+
+echo "$server2" > "/etc/nginx/sites-available/riegel.canyon.d21.com"
+
+ln -s /etc/nginx/sites-available/riegel.canyon.d21.com /etc/nginx/sites-enabled
+
+service php7.3-fpm start
+
+service nginx restart
+```
+
+## Soal 15
+
+## Soal 16
+
+## Soal 17
+
+## Soal 18
+
+Untuk memastikan ketiganya bekerja sama secara adil untuk mengatur Riegel Channel maka implementasikan Proxy Bind pada Eisen untuk mengaitkan IP dari Frieren, Flamme, dan Fern.
+
+- Untuk mengimplementasikan Proxy Bind pada setiap worker, dapat dilakukan di Eisen dengan menambahkan lokasi baru untuk setiap worker. Lalu melakukan proxy_pass menuju IP dari worker tersebut.
+
+```
+     location /frieren {
+            proxy_bind 10.32.2.1;
+            proxy_pass http://10.32.4.1:8001/index.php;
+     }
+
+     location /flamme {
+            proxy_bind 10.32.2.1;
+            proxy_pass http://10.32.4.2:8002/index.php;
+     }
+
+     location /fern/{
+            proxy_bind 10.32.2.1;
+            proxy_pass http://10.32.4.3:8003/index.php;
+     }
+```
+
+## Soal 19
+
+## Soal 20
