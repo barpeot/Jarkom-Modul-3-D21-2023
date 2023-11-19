@@ -1015,9 +1015,65 @@ Cek juga database yang telah dibuat di Denken.
 
 ## Soal 15
 
+Untuk melakukan benchmarking pada nomor 15-16, maka kita siapkan dulu file json sebagai berikut yang akan disimpan sebagai data.json
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/5e2c18f1-c959-4b76-8705-3e160bc4bf00)
+
+Kemudian, kita lakukan benchmark dengan command sebagai berikut
+```
+ab -n 100 -c 10 -p data.json -T application/json http://10.32.2.1/api/auth/register
+```
+Berikut hasilnya
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/d20acc4c-904b-4375-b6b6-07004c18b174)
+
+
+Untuk melihat respon APInya, kita lakukan curl dengan command berikut
+```
+curl -X POST "http://10.32.2.1/api/auth/register" -d "username=kelompokd21&password=passwordd21" > out.data
+```
+Kemudian, response akan ada di file out.data
+```
+{"user":{"username":"kelompokd21","updated_at":"2023-11-16T13:31:24.000000Z","created_at":"2023-11-16T13:31:24.000000Z","id":1},"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbGFyYXZlbC9hcGkvYXV0aC9yZWdpc3RlciIsImlhdCI6MTcwMDE0MTQ4NCwiZXhwIjoxNzAwMTQ1MDg0LCJuYmYiOjE3MDAxNDE0ODQsImp0aSI6IkU2clBxd3BINjNYRkJMOHoiLCJzdWIiOiIxIiwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyJ9.rltayKI4pEAJtAo0vzbzxH0fE1fnPEwIxf91bNFuY90"}
+```
+
 ## Soal 16
 
+Menggunakan file yang data.json yang sama, kita benchmark dengan command berikut
+```
+ab -n 100 -c 10 -p data.json -T application/json http://10.32.2.1/api/auth/login
+```
+Berikut adalah hasilnya
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/b9f02273-3a96-41c1-b745-4b99ad8d7dbb)
+
+Untuk respon API, kita curl dengan user yang sudah kita register
+
+```
+curl -X POST "http://10.32.2.1/api/auth/login" -d "username=kelompokd21&password=passwordd21" > out.data
+```
+Dan kita cek out.data, yang isinya akan kita pakai untuk soal 17
+```
+{"token":"eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vbGFyYXZlbC9hcGkvYXV0aC9sb2dpbiIsImlhdCI6MTcwMDE0MTYwOSwiZXhwIjoxNzAwMTQ1MjA5LCJuYmYiOjE3MDAxNDE2MDksImp0aSI6IkcxaVEwMWR3dmtJaWxQVEUiLCJzdWIiOiIxIiwicHJ2IjoiMjNiZDVjODk0OWY2MDBhZGIzOWU3MDFjNDAwODcyZGI3YTU5NzZmNyJ9.TAJpjSipHOUOrayMa0XX9NrB-k1Wpvkt8zCMda0Xx1c"}
+
+```
+
 ## Soal 17
+
+Untuk melakukan benchmark, kita gunakan command
+```
+ab -n 100 -c 10 -H "Authorization: Bearer <Token>" -H "Content-Type: application/json" http://10.32.2.1/api/me
+```
+Kita ganti <Token> dengan token yang sudah kita dapatkan di file out.data sebelumnya. Berikut adalah hasil testingnya
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/c91fce75-ac80-47f6-8fa8-d25486ab1c5a)
+
+Untuk melihat respon APInya, kita gunakan
+```
+curl -X GET "http://10.32.2.1/api/me" -H "Authorization: Bearer <Token>" -H "Content-Type: application/json" > out.data
+```
+Dengan <Token> kita ganti juga. Maka hasil out.data adalah seperti berikut
+
+```
+![image](https://github.com/barpeot/Jarkom-Modul-3-D21-2023/assets/114351382/a2c2f17e-8010-4279-b146-6864c22f12f1)
+
+```
 
 ## Soal 18
 
