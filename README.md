@@ -285,3 +285,155 @@ service php7.3-fpm start
 
 service nginx restart
 ```
+
+Untuk mengecek dapat dengan melakukan ```lynx granz.channel.d21.com``` di client setelah semua worker dan load balancer telah berjalan.
+
+![lynx](/assets/6_lynx.png)
+
+## Soal 7
+
+Aturlah agar Eisen dapat bekerja dengan maksimal, lalu lakukan testing dengan 1000 request dan 100 request/second.
+
+- Untuk mengetes Eisen sebanyak 1000 request dan 100 request/second, dapat dilakukan dengan command ```ab -n 1000 -c 100 http://granz.channel.d21.com:81```. Selain itu, dalam testing Eisen ini akan diimplementasikan algoritma Load Balancer berupa weighted round robin dengan ketentuan Lawine weight = 4, Linie weight = 2, dan Lugner weight = 1. Caranya adalah dengan memodifikasi setting pada Eisen:
+
+```
+upstream myweb  {
+        server 10.32.3.1:80 weight=4;
+        server 10.32.3.2:80 weight=2;
+        server 10.32.3.3:80 weight=1;
+ }
+```
+
+Sehingga didapat hasil sebagai berikut
+
+![ab](/assets/7_ab1.png)
+
+![ab_2](/assets/7_ab2.png)
+
+## Soal 8
+
+Karena diminta untuk menuliskan grimoire, buatlah analisis hasil testing dengan 200 request dan 10 request/second masing-masing algoritma Load Balancer.
+
+- Sama seperti sebelumnya, testing dilakukan dengan menggunakan command ```ab -n 200 -c 10 http://granz.channel.d21.com:81``` kali ini dibedakan algoritma yang digunakan dengan cara mengubah setting pada Eisen. Adapun hasilnya adalah sebagai berikut:
+
+### Weighted Round Robin
+Setup Eisen adalah sebagai berikut:
+
+```
+upstream myweb  {
+        server 10.32.3.1:80 weight=4;
+        server 10.32.3.2:80 weight=2;
+        server 10.32.3.3:80 weight=1;
+}
+
+```
+
+Hasil:
+
+![wrr](/assets/8_wrr1.png)
+![wrr2](/assets/8_wrr2.png)
+
+### Weighted Round Robin = 125,76 Request/Second
+
+### Least Connection
+Setup Eisen adalah sebagai berikut:
+
+```
+upstream myweb  {
+        server 10.32.3.1:80;
+        server 10.32.3.2:80;
+        server 10.32.3.3:80;
+}
+
+ server {
+     listen 81;
+     least_conn;
+
+     server_name granz.channel.d21.com;
+
+     location / {
+            proxy_pass http://myweb;
+            proxy_set_header    X-Real-IP \$remote_addr;
+            proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header    Host \$http_host;
+
+     }
+}
+```
+
+Hasil:
+
+![lc](/assets/8_lc1.png)
+![lc2](/assets/8_lc2.png)
+
+### Least Connection = 145,2 Request/Second
+
+### IP Hash
+Setup Eisen adalah sebagai berikut:
+
+```
+upstream myweb  {
+        server 10.32.3.1:80;
+        server 10.32.3.2:80;
+        server 10.32.3.3:80;
+ }
+
+server {
+     listen 81;
+     ip_hash;
+
+     server_name granz.channel.d21.com;
+
+     location / {
+            proxy_pass http://myweb;
+            proxy_set_header    X-Real-IP \$remote_addr;
+            proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header    Host \$http_host;
+
+     }
+}
+```
+
+Hasil:
+
+![iph](/assets/8_iph1.png)
+![iph2](/assets/8_iph2.png)
+
+### IP Hash = 202,51 Request/Second
+
+### Generic Hash
+Setup Eisen adalah sebagai berikut:
+
+```
+upstream myweb  {
+        server 10.32.3.1:80;
+        server 10.32.3.2:80;
+        server 10.32.3.3:80;
+ }
+
+ server {
+     listen 81;
+     hash \$request_uri consistent;
+
+     server_name granz.channel.d21.com;
+
+     location / {
+            proxy_pass http://myweb;
+            proxy_set_header    X-Real-IP \$remote_addr;
+            proxy_set_header    X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header    Host \$http_host;
+
+     }
+}
+```
+
+Hasil:
+
+![gh](/assets/8_gh1.png)
+![gh2](/assets/8_gh2.png)
+
+### Generic Hash = 171,06 Request/Second
+
+Grafik:
+
+![grafik](/assets/8_grafik.png)
